@@ -1,0 +1,9 @@
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\bin\Debug\lab1Grads.exe.config
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\bin\Debug\lab1Grads.exe
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\bin\Debug\lab1Grads.pdb
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csprojAssemblyReference.cache
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.Lab.resources
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csproj.GenerateResource.cache
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csproj.CoreCompileInputs.cache
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.exe
+E:\work\AdditionalOOM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.pdb
