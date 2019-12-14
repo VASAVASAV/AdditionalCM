@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace lab1Grads
@@ -15,6 +12,8 @@ namespace lab1Grads
         private Button button1;
         private Button button2;
         private Button button3;
+        private TextBox textBox3;
+        private Label label2;
         private DataGridView dataGridView1;
 
         public Lab()
@@ -31,6 +30,8 @@ namespace lab1Grads
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -88,19 +89,39 @@ namespace lab1Grads
             this.button2.TabIndex = 5;
             this.button2.Text = "Розв\'язати методом найшвидшого спуску";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // button3
             // 
             this.button3.Location = new System.Drawing.Point(480, 4);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(215, 40);
+            this.button3.Size = new System.Drawing.Size(164, 40);
             this.button3.TabIndex = 6;
             this.button3.Text = "Розв\'язати обома методами і порівняти";
             this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // textBox3
+            // 
+            this.textBox3.Location = new System.Drawing.Point(650, 25);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(100, 20);
+            this.textBox3.TabIndex = 8;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(650, 9);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(52, 13);
+            this.label2.TabIndex = 7;
+            this.label2.Text = "Accuracy";
             // 
             // Lab
             // 
             this.ClientSize = new System.Drawing.Size(1025, 465);
+            this.Controls.Add(this.textBox3);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
@@ -133,35 +154,158 @@ namespace lab1Grads
             }
             dataGridView1.Rows.Clear();
             dataGridView1.Columns.Clear();
-            if (!(Length > 30 || Length < 1))
+            if ((Length > 30 || Length < 1))
             {
-                for (int i = 0; i < Length; i++)
-                {
-                    dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
-                    dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "a" + (i + 1);
-                    dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
-                }
-                for (int i = 0; i < Length; i++)
-                {
-                    dataGridView1.Rows.Add();
-                }
-                dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "b";
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
-                dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "x";
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
-                dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "x0(опціонально)";
-                dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 100;
+                LogOutput("Wrong size");
+                return;
             }
+            for (int i = 0; i < Length; i++)
+            {
+                dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
+                dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "a" + (i + 1);
+                dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
+            }
+            for (int i = 0; i < Length; i++)
+            {
+                dataGridView1.Rows.Add();
+            }
+            dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "b";
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
+            dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "x0(опціонально)";
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 100;
+            dataGridView1.Columns.Add(new DataGridViewTextBoxColumn());
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].HeaderText = "x";
+            dataGridView1.Columns[dataGridView1.Columns.Count - 1].Width = 75;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
+            int Length;
+            try
+            {
+                Length = Convert.ToInt32(textBox1.Text);
+            }
+            catch
+            {
+                return;
+            }
+            if ((Length > 30 || Length < 1))
+            {
+                LogOutput("Wrong size");
+                return;
+            }
+            double epsiolon;
+            try
+            {
+                epsiolon = Convert.ToInt32(textBox2.Text);
+            }
+            catch
+            {
+                return;
+            }
+            if (epsiolon < 0)
+            {
+                LogOutput("Wrong size");
+                return;
+            }
+            double[,] x = new double[Length,1];
+            double[,] p = new double[Length,1];
+            double[,] r = new double[Length,1];
+            double[,] b = new double[Length,1];
+            double[,] A = new double[Length,Length];
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i,0] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[Length + 1].Value));
+                }
+            }
+            catch
+            {
+                LogOutput("Initial x vector is wrong; 0 values are taken instead");
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i,0] = 0; 
+                }
+            }
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    b[i,0] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[Length].Value));
+                }
+            }
+            catch
+            {
+                LogOutput("B vector is wrong");
+                return;
+            }
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    for (int j = 0; j < Length; j++)
+                    {
+                        A[i, j] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[j].Value));
+                    }
+                }
+            }
+            catch
+            {
+                LogOutput("A matrix is wrong");
+                return;
+            }
+            var temp = Matrixes.Multiply(A, x);
+            for (int i = 0; i < Length; i++)
+            {
+                r[i, 0] = b[i, 0] - temp[i, 0];
+            }
+            for (int i = 0; i < Length; i++)
+            {
+                p[i, 0] = r[i, 0];
+            }
+            double alfa = 0;
+            double tempDouble=0;
+            for (int i = 0; i < Length; i++)
+            {
+                alfa += r[i, 0] * r[i, 0];
+            }
+            temp = Matrixes.Multiply(A, p);
+            for (int i = 0; i < Length; i++)
+            {
+                tempDouble += temp[i,0] * r[i, 0];
+            }
+            alfa /= tempDouble;
+            for (int i = 0; i < Length; i++)
+            {
+                x[i, 0] = x[i, 0] + alfa * p[i, 0];
+            }
+            for (int i = 0; i < Length; i++)
+            {
+                r[i,0] = r[i,0] - alfa*    temp[i, 0];
+            }
+            while (!Less(epsiolon, r))
+            {
+                
+            }
 
         }
 
+        private bool Less(double eps, double[,] Vector)
+        {
+            for (int i = 0; i < Vector.GetLength(0); i++)
+            {
+                for (int j = 0; j < Vector.GetLength(1); j++)
+                {
+                    if (eps > Vector[i,j])
+                        return false;
+                }
+            }
+            return true;
+        }
+        
         private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex < dataGridView1.Rows.Count)
@@ -184,6 +328,27 @@ namespace lab1Grads
                 }
                 dataGridView1.Rows[e.ColumnIndex].Cells[e.RowIndex].Value = "" + dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
             }
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        double Scalar(List<double> a, List<double> b)
+        {
+            double result = 0;
+            for (int i = 0; i < a.Count; i++)
+            {
+                result += a[i] * b[i];
+            }
+            return result;
         }
     }
 
