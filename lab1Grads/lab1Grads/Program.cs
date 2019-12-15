@@ -11,7 +11,6 @@ namespace lab1Grads
         private TextBox textBox2;
         private Button button1;
         private Button button2;
-        private Button button3;
         private TextBox textBox3;
         private Label label2;
         private DataGridView dataGridView1;
@@ -29,7 +28,6 @@ namespace lab1Grads
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
@@ -91,22 +89,13 @@ namespace lab1Grads
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(480, 4);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(164, 40);
-            this.button3.TabIndex = 6;
-            this.button3.Text = "Розв\'язати обома методами і порівняти";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
             // textBox3
             // 
             this.textBox3.Location = new System.Drawing.Point(650, 25);
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(100, 20);
             this.textBox3.TabIndex = 8;
+            this.textBox3.Text = "0,01";
             // 
             // label2
             // 
@@ -122,7 +111,6 @@ namespace lab1Grads
             this.ClientSize = new System.Drawing.Size(1025, 465);
             this.Controls.Add(this.textBox3);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox2);
@@ -199,10 +187,11 @@ namespace lab1Grads
             double epsiolon;
             try
             {
-                epsiolon = Convert.ToInt32(textBox2.Text);
+                epsiolon = Convert.ToDouble(textBox3.Text);
             }
             catch
             {
+                LogOutput("Wrong accuracy");
                 return;
             }
             if (epsiolon < 0)
@@ -257,6 +246,7 @@ namespace lab1Grads
                 LogOutput("A matrix is wrong");
                 return;
             }
+            DateTime Now = DateTime.Now;
             var temp = Matrixes.Multiply(A, x);
             for (int i = 0; i < Length; i++)
             {
@@ -266,7 +256,7 @@ namespace lab1Grads
             {
                 p[i, 0] = r[i, 0];
             }
-            double alfa = 0;
+            double alfa = 0, beta;
             double tempDouble=0;
             for (int i = 0; i < Length; i++)
             {
@@ -288,9 +278,48 @@ namespace lab1Grads
             }
             while (!Less(epsiolon, r))
             {
-                
+                beta = 0;
+                temp = Matrixes.Multiply(A, p);
+                tempDouble = 0;
+                for (int i = 0; i < Length; i++)
+                {
+                    tempDouble += temp[i, 0] * p[i, 0];
+                }
+                for (int i = 0; i < Length; i++)
+                {
+                    beta += temp[i, 0] * r[i, 0];
+                }
+                beta = -1 * (beta / tempDouble);
+                for (int i = 0; i < Length; i++)
+                {
+                    p[i,0] += beta*p[i,0]+r[i,0];
+                }
+                alfa = 0;
+                tempDouble = 0;
+                for (int i = 0; i < Length; i++)
+                {
+                    alfa += r[i, 0] * r[i, 0];
+                }
+                temp = Matrixes.Multiply(A, p);
+                for (int i = 0; i < Length; i++)
+                {
+                    tempDouble += temp[i, 0] * r[i, 0];
+                }
+                alfa /= tempDouble;
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i, 0] = x[i, 0] + alfa * p[i, 0];
+                }
+                for (int i = 0; i < Length; i++)
+                {
+                    r[i, 0] = r[i, 0] - alfa * temp[i, 0];
+                }
             }
-
+            for (int i = 0; i < Length; i++)
+            {
+                dataGridView1.Rows[i].Cells[Length + 2].Value = x[i, 0];
+            }
+            LogOutput("Time of work =" + (DateTime.Now - Now).TotalMilliseconds/1000 +"s");
         }
 
         private bool Less(double eps, double[,] Vector)
@@ -299,7 +328,7 @@ namespace lab1Grads
             {
                 for (int j = 0; j < Vector.GetLength(1); j++)
                 {
-                    if (eps > Vector[i,j])
+                    if (eps < Math.Abs(Vector[i,j]))
                         return false;
                 }
             }
@@ -320,12 +349,12 @@ namespace lab1Grads
                     dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = "";
                     return;
                 }
-                if (("" + dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value).Contains("-"))
-                {
-                    LogOutput("Підтримуються лише додатні значення");
-                    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = "";
-                    return;
-                }
+                //if (("" + dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value).Contains("-"))
+                //{
+                //    LogOutput("Підтримуються лише додатні значення");
+                //    dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = "";
+                //    return;
+                //}
                 dataGridView1.Rows[e.ColumnIndex].Cells[e.RowIndex].Value = "" + dataGridView1.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
             }
 
@@ -333,12 +362,139 @@ namespace lab1Grads
 
         private void button2_Click(object sender, EventArgs e)
         {
-
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-
+            int Length;
+            try
+            {
+                Length = Convert.ToInt32(textBox1.Text);
+            }
+            catch
+            {
+                return;
+            }
+            if ((Length > 30 || Length < 1))
+            {
+                LogOutput("Wrong size");
+                return;
+            }
+            double epsiolon;
+            try
+            {
+                epsiolon = Convert.ToDouble(textBox3.Text);
+            }
+            catch
+            {
+                LogOutput("Wrong accuracy");
+                return;
+            }
+            if (epsiolon < 0)
+            {
+                LogOutput("Wrong size");
+                return;
+            }
+            double[,] x = new double[Length, 1];
+            double[,] r = new double[Length, 1];
+            double[,] b = new double[Length, 1];
+            double[,] A = new double[Length, Length];
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i, 0] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[Length + 1].Value));
+                }
+            }
+            catch
+            {
+                LogOutput("Initial x vector is wrong; 0 values are taken instead");
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i, 0] = 0;
+                }
+            }
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    b[i, 0] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[Length].Value));
+                }
+            }
+            catch
+            {
+                LogOutput("B vector is wrong");
+                return;
+            }
+            try
+            {
+                for (int i = 0; i < Length; i++)
+                {
+                    for (int j = 0; j < Length; j++)
+                    {
+                        A[i, j] = (Convert.ToDouble(dataGridView1.Rows[i].Cells[j].Value));
+                    }
+                }
+            }
+            catch
+            {
+                LogOutput("A matrix is wrong");
+                return;
+            }
+            DateTime Now = DateTime.Now;
+            var temp = Matrixes.Multiply(A, x);
+            for (int i = 0; i < Length; i++)
+            {
+                r[i, 0] = b[i, 0] - temp[i, 0];
+            }
+            double tau=0;
+            double tempDouble = 0;
+            temp = Matrixes.Multiply(A, r);
+            for (int i = 0; i < Length; i++)
+            {
+                tau += r[i, 0] * r[i, 0];
+            }
+            temp = Matrixes.Multiply(A, r);
+            for (int i = 0; i < Length; i++)
+            {
+                tempDouble += temp[i, 0] * r[i, 0];
+            }
+            tau /= -tempDouble;
+            for (int i = 0; i < Length; i++)
+            {
+                x[i,0] = x[i,0] - tau * r[i,0];
+            }
+            temp = Matrixes.Multiply(A, x);
+            for (int i = 0; i < Length; i++)
+            {
+                r[i, 0] = b[i, 0] - temp[i, 0];
+            }
+            while (!Less(epsiolon, r))
+            {
+                tau = 0;
+                tempDouble = 0;
+                temp = Matrixes.Multiply(A, r);
+                for (int i = 0; i < Length; i++)
+                {
+                    tau += r[i, 0] * r[i, 0];
+                }
+                temp = Matrixes.Multiply(A, r);
+                for (int i = 0; i < Length; i++)
+                {
+                    tempDouble += temp[i, 0] * r[i, 0];
+                }
+                tau /= -tempDouble;
+                for (int i = 0; i < Length; i++)
+                {
+                    x[i, 0] = x[i, 0] - tau * r[i, 0];
+                }
+                temp = Matrixes.Multiply(A, x);
+                for (int i = 0; i < Length; i++)
+                {
+                    r[i, 0] = b[i, 0] - temp[i, 0];
+                }
+            }
+            for (int i = 0; i < Length; i++)
+            {
+                dataGridView1.Rows[i].Cells[Length + 2].Value = x[i, 0];
+            }
+            LogOutput("Time of work =" + (DateTime.Now - Now).TotalMilliseconds / 1000 + "s");
         }
 
         double Scalar(List<double> a, List<double> b)
