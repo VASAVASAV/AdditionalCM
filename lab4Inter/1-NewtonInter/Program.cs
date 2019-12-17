@@ -32,7 +32,509 @@ namespace InterMn
         private Label label4;
         private TextBox textBox5;
         private CheckBox checkBox2;
+        private Button button1;
+        private Button button3;
+        private Button button4;
         private double[] Polynom;
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                NumOfPoints = Convert.ToInt32(textBox2.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Кількість вузлів введена невірно. Спробуйте ввести ціле число" + Environment.NewLine;
+                return;
+            }
+            if (NumOfPoints <= 1)
+            {
+                textBox3.Text += "Для інтерполяції необхідно більше точок" + Environment.NewLine;
+                return;
+            }
+            int i, j, k;
+            grid = new double[NumOfPoints];
+            fgrid = new double[NumOfPoints];
+            string function = textBox1.Text;
+            Parser pars = new Parser();
+            if (!(radioButton1.Checked || radioButton2.Checked))
+            {
+                textBox3.Text += "Виберіть тип вузлів" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                LB = Convert.ToDouble(textBox4.Text);
+                RB = Convert.ToDouble(textBox5.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Невірно введена ліва або права границя. Спробуйте ввести число" + Environment.NewLine;
+                return;
+            }
+            if (LB >= RB)
+            {
+                textBox3.Text += "Невірно заданий інтервал" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                pars.AddVariable("e", Math.E);
+                pars.AddVariable("pi", Math.PI);
+                pars.AddVariable("x",Convert.ToDouble(LB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            catch
+            {
+                textBox3.Text += "Функція введена невірно" + Environment.NewLine;
+                return;
+            }
+            if (radioButton1.Checked)
+            {
+                for (i = 0; i < NumOfPoints-1; i++)
+                {
+                    grid[i] = LB + i * ((RB - LB) / (NumOfPoints - 1));
+                    pars.AddVariable("x", Convert.ToDouble(grid[i]));
+                    fgrid[i] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+                grid[NumOfPoints - 1] = RB;
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                fgrid[NumOfPoints-1]=pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            else
+            {
+                double Multipl = 1.0 / Math.Cos(((1.0) * Math.PI) / (2 * NumOfPoints));
+                for (i = 1; i <= NumOfPoints; i++)
+                {
+                    grid[i - 1] = (LB + RB) / 2 - ((RB - LB) * Math.Cos(((2.0 * i - 1) * Math.PI) / (2 * NumOfPoints)) * Multipl) / 2;
+                    pars.AddVariable("x", Convert.ToDouble(grid[i-1]));
+                    fgrid[i-1] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+            }
+            TLB = LB; // - 0.05 * (RB - LB);
+            TRB = RB;// +0.05 * (RB - LB);
+            if (TLB == TRB)
+            {
+                TLB -= 0.5;
+                TRB += 0.5;
+            }
+            this.chart1.ChartAreas[0].AxisY.Title = "f(x)";
+            this.chart1.ChartAreas[0].AxisX.Title = "X";
+            this.chart1.ChartAreas[0].AxisX.Minimum = Convert.ToDouble(TLB);
+            this.chart1.ChartAreas[0].AxisX.Maximum = Convert.ToDouble(TRB);
+            this.chart1.ChartAreas[0].AxisX.LabelStyle.Format = "{0:0.0000}";
+            this.chart1.Series[0].Color = Color.FromName("Black");
+            this.chart1.Series[1].Color = Color.FromName("Red");
+            this.chart1.Series[2].Color = Color.FromName("Blue");
+            this.chart1.Series[2].MarkerSize = 6;
+            this.chart1.Series[1].MarkerSize = 7;
+            this.chart1.Series[0].MarkerSize = 8;
+            this.chart1.Series[2].Points.Clear();
+            this.chart1.Series[1].Points.Clear();
+            this.chart1.Series[0].Points.Clear();
+            double permval;
+            double v1, v2;
+           // var Timer = DateTime.Now;
+            if (checkBox1.Checked)
+            {
+                string func = textBox1.Text;
+                for (i = 0; i < 400; i++)
+                {
+                    pars.AddVariable("x", Convert.ToDouble(TLB + (((double)i) / 400) * (TRB - TLB)));
+                    permval = pars.SimplifyDouble(func);
+                    pars.RemoveVariable("x");
+                    this.chart1.Series[2].Points.AddXY(TLB + (((double)i) / 400) * (TRB - TLB), permval);
+                }
+
+            }
+            if (checkBox2.Checked)
+            {
+                for (i = 0; i < NumOfPoints; i++)
+                {
+                    this.chart1.Series[0].Points.AddXY(grid[i], fgrid[i]);
+                }
+            }
+            double[,] xij = new double[grid.Length, grid.Length];
+            for (i = 0; i < grid.Length; i++)
+            {
+                for (j = 0; j < grid.Length; j++)
+                {
+                    xij[i,j] = grid[i] - grid[j];
+                }
+            }
+            var Timer = DateTime.Now;
+            int Num = NumOfPoints * 10 + 5;
+            double localx;
+            double temp1,temp2,temp;
+            for (i = 0; i <= Num; i++)
+            {
+                temp = 0;
+                localx = TLB + (((double)i) / Num) * (TRB - TLB);
+                if (grid.Contains(localx))
+                    continue;
+                for (k = 0; k < grid.Length; k++)
+                {
+                    temp1 = 1;
+                    for (j = 0; j < grid.Length; j++)
+                    {
+                        if (j == k)
+                            continue;
+                        temp1 *= (localx - grid[j]) / xij[k, j];
+                    }
+                    temp += temp1 * fgrid[k];
+                }
+                this.chart1.Series[1].Points.AddXY(localx, temp);
+            }
+            textBox3.Text += "Time of work =" + Math.Round((DateTime.Now - Timer).TotalMilliseconds / 1000,5) + "s" + Environment.NewLine;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                NumOfPoints = Convert.ToInt32(textBox2.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Кількість вузлів введена невірно. Спробуйте ввести ціле число" + Environment.NewLine;
+                return;
+            }
+            if (NumOfPoints <= 1)
+            {
+                textBox3.Text += "Для інтерполяції необхідно більше точок" + Environment.NewLine;
+                return;
+            }
+            int i, j, k;
+            grid = new double[NumOfPoints];
+            fgrid = new double[NumOfPoints];
+            string function = textBox1.Text;
+            Parser pars = new Parser();
+            if (!(radioButton1.Checked || radioButton2.Checked))
+            {
+                textBox3.Text += "Виберіть тип вузлів" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                LB = Convert.ToDouble(textBox4.Text);
+                RB = Convert.ToDouble(textBox5.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Невірно введена ліва або права границя. Спробуйте ввести число" + Environment.NewLine;
+                return;
+            }
+            if (LB >= RB)
+            {
+                textBox3.Text += "Невірно заданий інтервал" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                pars.AddVariable("e", Math.E);
+                pars.AddVariable("pi", Math.PI);
+                pars.AddVariable("x", Convert.ToDouble(LB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            catch
+            {
+                textBox3.Text += "Функція введена невірно" + Environment.NewLine;
+                return;
+            }
+            if (radioButton1.Checked)
+            {
+                for (i = 0; i < NumOfPoints - 1; i++)
+                {
+                    grid[i] = LB + i * ((RB - LB) / (NumOfPoints - 1));
+                    pars.AddVariable("x", Convert.ToDouble(grid[i]));
+                    fgrid[i] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+                grid[NumOfPoints - 1] = RB;
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                fgrid[NumOfPoints - 1] = pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            else
+            {
+                double Multipl = 1.0 / Math.Cos(((1.0) * Math.PI) / (2 * NumOfPoints));
+                for (i = 1; i <= NumOfPoints; i++)
+                {
+                    grid[i - 1] = (LB + RB) / 2 - ((RB - LB) * Math.Cos(((2.0 * i - 1) * Math.PI) / (2 * NumOfPoints)) * Multipl) / 2;
+                    pars.AddVariable("x", Convert.ToDouble(grid[i - 1]));
+                    fgrid[i - 1] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+            }
+            TLB = LB; // - 0.05 * (RB - LB);
+            TRB = RB;// +0.05 * (RB - LB);
+            if (TLB == TRB)
+            {
+                TLB -= 0.5;
+                TRB += 0.5;
+            }
+            this.chart1.ChartAreas[0].AxisY.Title = "f(x)";
+            this.chart1.ChartAreas[0].AxisX.Title = "X";
+            this.chart1.ChartAreas[0].AxisX.Minimum = Convert.ToDouble(TLB);
+            this.chart1.ChartAreas[0].AxisX.Maximum = Convert.ToDouble(TRB);
+            this.chart1.ChartAreas[0].AxisX.LabelStyle.Format = "{0:0.0000}";
+            this.chart1.Series[0].Color = Color.FromName("Black");
+            this.chart1.Series[1].Color = Color.FromName("Red");
+            this.chart1.Series[2].Color = Color.FromName("Blue");
+            this.chart1.Series[2].MarkerSize = 6;
+            this.chart1.Series[1].MarkerSize = 7;
+            this.chart1.Series[0].MarkerSize = 8;
+            this.chart1.Series[2].Points.Clear();
+            this.chart1.Series[1].Points.Clear();
+            this.chart1.Series[0].Points.Clear();
+            double permval;
+            double v1, v2;
+            if (checkBox1.Checked)
+            {
+                string func = textBox1.Text;
+                for (i = 0; i < 400; i++)
+                {
+                    pars.AddVariable("x", Convert.ToDouble(TLB + (((double)i) / 400) * (TRB - TLB)));
+                    permval = pars.SimplifyDouble(func);
+                    pars.RemoveVariable("x");
+                    this.chart1.Series[2].Points.AddXY(TLB + (((double)i) / 400) * (TRB - TLB), permval);
+                }
+
+            }
+            if (checkBox2.Checked)
+            {
+                for (i = 0; i < NumOfPoints; i++)
+                {
+                    this.chart1.Series[0].Points.AddXY(grid[i], fgrid[i]);
+                }
+            }
+            double[,] xij = new double[grid.Length, grid.Length];
+            for (i = 0; i < grid.Length; i++)
+            {
+                for (j = 0; j < grid.Length; j++)
+                {
+                    xij[i, j] = grid[i] - grid[j];
+                }
+            }
+            //var Timer = DateTime.Now;
+            var Timer = DateTime.Now;
+            double[] lambda = new double[grid.Length];
+            double temp1, temp2, temp;
+            for (j = 0; j < grid.Length; j++)
+            {
+                temp = 1;
+                for (i = 0; i < grid.Length; i++)
+                {
+                    if (i == j)
+                        continue;
+                    temp *= xij[i, j];
+                }
+                lambda[j] = 1d / (temp);
+            }
+            int Num = NumOfPoints * 10 + 5;
+            double localx;
+            for (i = 0; i <= Num; i++)
+            {
+                temp = 0;
+                localx = TLB + (((double)i) / Num) * (TRB - TLB);
+                if (grid.Contains(localx))
+                    continue;
+                temp1 = 0;
+                for (k = 0; k < grid.Length; k++)
+                {
+                    temp1 += (lambda[k]*fgrid[k])/(localx-grid[k]);
+                }
+                for (k = 0; k < grid.Length; k++)
+                {
+                    temp1 *= (localx - grid[k]);
+                }
+                this.chart1.Series[1].Points.AddXY(localx, -temp1);
+            }
+            textBox3.Text += "Time of work =" + Math.Round((DateTime.Now - Timer).TotalMilliseconds / 1000, 5) + "s" + Environment.NewLine;
+        
+    }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                NumOfPoints = Convert.ToInt32(textBox2.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Кількість вузлів введена невірно. Спробуйте ввести ціле число" + Environment.NewLine;
+                return;
+            }
+            if (NumOfPoints <= 1)
+            {
+                textBox3.Text += "Для інтерполяції необхідно більше точок" + Environment.NewLine;
+                return;
+            }
+            int i, j, k;
+            grid = new double[NumOfPoints];
+            fgrid = new double[NumOfPoints];
+            string function = textBox1.Text;
+            Parser pars = new Parser();
+            if (!(radioButton1.Checked || radioButton2.Checked))
+            {
+                textBox3.Text += "Виберіть тип вузлів" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                LB = Convert.ToDouble(textBox4.Text);
+                RB = Convert.ToDouble(textBox5.Text);
+            }
+            catch
+            {
+                textBox3.Text += "Невірно введена ліва або права границя. Спробуйте ввести число" + Environment.NewLine;
+                return;
+            }
+            if (LB >= RB)
+            {
+                textBox3.Text += "Невірно заданий інтервал" + Environment.NewLine;
+                return;
+            }
+            try
+            {
+                pars.AddVariable("e", Math.E);
+                pars.AddVariable("pi", Math.PI);
+                pars.AddVariable("x", Convert.ToDouble(LB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            catch
+            {
+                textBox3.Text += "Функція введена невірно" + Environment.NewLine;
+                return;
+            }
+            if (radioButton1.Checked)
+            {
+                for (i = 0; i < NumOfPoints - 1; i++)
+                {
+                    grid[i] = LB + i * ((RB - LB) / (NumOfPoints - 1));
+                    pars.AddVariable("x", Convert.ToDouble(grid[i]));
+                    fgrid[i] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+                grid[NumOfPoints - 1] = RB;
+                pars.AddVariable("x", Convert.ToDouble(RB));
+                fgrid[NumOfPoints - 1] = pars.SimplifyDouble(function);
+                pars.RemoveVariable("x");
+            }
+            else
+            {
+                double Multipl = 1.0 / Math.Cos(((1.0) * Math.PI) / (2 * NumOfPoints));
+                for (i = 1; i <= NumOfPoints; i++)
+                {
+                    grid[i - 1] = (LB + RB) / 2 - ((RB - LB) * Math.Cos(((2.0 * i - 1) * Math.PI) / (2 * NumOfPoints)) * Multipl) / 2;
+                    pars.AddVariable("x", Convert.ToDouble(grid[i - 1]));
+                    fgrid[i - 1] = pars.SimplifyDouble(function);
+                    pars.RemoveVariable("x");
+                }
+            }
+            TLB = LB; // - 0.05 * (RB - LB);
+            TRB = RB;// +0.05 * (RB - LB);
+            if (TLB == TRB)
+            {
+                TLB -= 0.5;
+                TRB += 0.5;
+            }
+            this.chart1.ChartAreas[0].AxisY.Title = "f(x)";
+            this.chart1.ChartAreas[0].AxisX.Title = "X";
+            this.chart1.ChartAreas[0].AxisX.Minimum = Convert.ToDouble(TLB);
+            this.chart1.ChartAreas[0].AxisX.Maximum = Convert.ToDouble(TRB);
+            this.chart1.ChartAreas[0].AxisX.LabelStyle.Format = "{0:0.0000}";
+            this.chart1.Series[0].Color = Color.FromName("Black");
+            this.chart1.Series[1].Color = Color.FromName("Red");
+            this.chart1.Series[2].Color = Color.FromName("Blue");
+            this.chart1.Series[2].MarkerSize = 6;
+            this.chart1.Series[1].MarkerSize = 7;
+            this.chart1.Series[0].MarkerSize = 8;
+            this.chart1.Series[2].Points.Clear();
+            this.chart1.Series[1].Points.Clear();
+            this.chart1.Series[0].Points.Clear();
+            double permval;
+            double v1, v2;
+            if (checkBox1.Checked)
+            {
+                string func = textBox1.Text;
+                for (i = 0; i < 400; i++)
+                {
+                    pars.AddVariable("x", Convert.ToDouble(TLB + (((double)i) / 400) * (TRB - TLB)));
+                    permval = pars.SimplifyDouble(func);
+                    pars.RemoveVariable("x");
+                    this.chart1.Series[2].Points.AddXY(TLB + (((double)i) / 400) * (TRB - TLB), permval);
+                }
+
+            }
+           // var Timer = DateTime.Now;
+            if (checkBox2.Checked)
+            {
+                for (i = 0; i < NumOfPoints; i++)
+                {
+                    this.chart1.Series[0].Points.AddXY(grid[i], fgrid[i]);
+                }
+            }
+            double[,] xij = new double[grid.Length, grid.Length];
+            for (i = 0; i < grid.Length; i++)
+            {
+                for (j = 0; j < grid.Length; j++)
+                {
+                    xij[i, j] = grid[i] - grid[j];
+                }
+            }
+            var Timer = DateTime.Now;
+            double[] lambda = new double[grid.Length];
+            double temp1, temp2, temp;
+            for (j = 0; j < grid.Length; j++)
+            {
+                temp = 1;
+                for (i = 0; i < grid.Length; i++)
+                {
+                    if (i == j)
+                        continue;
+                    temp *= xij[i, j];
+                }
+                lambda[j] = 1d / (temp);
+            }
+            int Num = NumOfPoints * 10 + 5;
+            double localx;
+            for (i = 0; i <= Num; i++)
+            {
+                temp1 = 0;
+                temp2 = 0;
+                localx = TLB + (((double)i) / Num) * (TRB - TLB);
+                if (grid.Contains(localx))
+                    continue;
+                for (j = 0; j < grid.Length; j++)
+                {
+                    temp1 += (lambda[j] * fgrid[j]) / (localx - grid[j]);
+                }
+                for (j = 0; j < grid.Length; j++)
+                {
+                    temp2 += (lambda[j]) / (localx - grid[j]);
+                }
+                this.chart1.Series[1].Points.AddXY(localx, temp1/temp2);
+            }
+            textBox3.Text += "Time of work =" + Math.Round((DateTime.Now - Timer).TotalMilliseconds / 1000, 5) + "s" + Environment.NewLine;
+
+        }
 
         public MyProg()
         {
@@ -63,6 +565,9 @@ namespace InterMn
             this.label4 = new System.Windows.Forms.Label();
             this.textBox5 = new System.Windows.Forms.TextBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -100,14 +605,15 @@ namespace InterMn
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(237, 20);
             this.textBox1.TabIndex = 1;
+            this.textBox1.Text = "sin(x)+(10/x)";
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(682, 26);
+            this.button2.Location = new System.Drawing.Point(579, 12);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(219, 89);
+            this.button2.Size = new System.Drawing.Size(161, 43);
             this.button2.TabIndex = 4;
-            this.button2.Text = "Інтерполювати!";
+            this.button2.Text = "Формула Ньютона";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -117,6 +623,7 @@ namespace InterMn
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(112, 20);
             this.textBox2.TabIndex = 5;
+            this.textBox2.Text = "10";
             // 
             // label1
             // 
@@ -204,6 +711,7 @@ namespace InterMn
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(67, 20);
             this.textBox4.TabIndex = 14;
+            this.textBox4.Text = "1";
             // 
             // label4
             // 
@@ -220,6 +728,7 @@ namespace InterMn
             this.textBox5.Name = "textBox5";
             this.textBox5.Size = new System.Drawing.Size(67, 20);
             this.textBox5.TabIndex = 16;
+            this.textBox5.Text = "10";
             // 
             // checkBox2
             // 
@@ -231,9 +740,42 @@ namespace InterMn
             this.checkBox2.Text = "Відображати вузли сітки";
             this.checkBox2.UseVisualStyleBackColor = true;
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(579, 64);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(161, 43);
+            this.button1.TabIndex = 18;
+            this.button1.Text = "Формула Лагранжа";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(746, 64);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(161, 43);
+            this.button3.TabIndex = 20;
+            this.button3.Text = "Друга бароцентрична формула";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(746, 12);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(161, 43);
+            this.button4.TabIndex = 19;
+            this.button4.Text = "Перша бароцентрична формула";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // MyProg
             // 
             this.ClientSize = new System.Drawing.Size(1110, 562);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.textBox5);
             this.Controls.Add(this.label4);
@@ -417,6 +959,7 @@ namespace InterMn
             this.chart1.Series[0].Points.Clear();
             double permval;
             double v1, v2;
+           // var Timer = DateTime.Now;
             if (checkBox1.Checked)
             {
                 string func = textBox1.Text;
@@ -436,6 +979,7 @@ namespace InterMn
                     this.chart1.Series[0].Points.AddXY(grid[i], fgrid[i]);
                 }
             }
+            var Timer = DateTime.Now;
             DivDif = new double[NumOfPoints][];
             for (i = 0; i < NumOfPoints; i++)
             {
@@ -469,6 +1013,7 @@ namespace InterMn
                 //pars.RemoveVariable("x");
                 this.chart1.Series[1].Points.AddXY(permx, permval);
             }
+            textBox3.Text += "Time of work =" + Math.Round((DateTime.Now - Timer).TotalMilliseconds / 1000,5) + "s" + Environment.NewLine;
             /*Polynom = new double[NumOfPoints];
             for (i = 0; i < NumOfPoints-1; i++)
             {

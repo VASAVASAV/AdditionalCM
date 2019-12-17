@@ -27,3 +27,5 @@ F:\work\AdditionalCM\AdditionalCM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csproj
 F:\work\AdditionalCM\AdditionalCM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csproj.CopyComplete
 F:\work\AdditionalCM\AdditionalCM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.exe
 F:\work\AdditionalCM\AdditionalCM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.pdb
+E:\work\AdditionalCM\lab1Grads\lab1Grads\bin\Debug\Matrix.dll
+E:\work\AdditionalCM\lab1Grads\lab1Grads\obj\Debug\lab1Grads.csproj.CopyComplete
